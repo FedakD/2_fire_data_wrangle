@@ -1,14 +1,17 @@
 ---
 title: "Hayman Fire Recovery"
-author: "Matthew Ross"
-date: "10/3/2019"
+author: "Derek Fedak"
+date: "`r format(Sys.time(), '%A %d %B, %Y')`"
 output: html_document
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, warning=F,message=F}
 library(tidyverse)
 library(tidyr)
 library(ggthemes)
+library(gridExtra)
 library(lubridate)
 
 # Now that we have learned how to munge (manipulate) data
@@ -43,10 +46,12 @@ full_long <- rbind(ndvi,ndmi,ndsi) %>%
   gather(key='site',value='value',-DateTime,-data) %>%
   filter(!is.na(value))
 
+# Example stack as a tidy dataset
+full_long2 <- rbind(ndvi, ndmi, ndsi) %>%
+  gather(key='treatment', value='veg_index', -DateTime, -data) %>%
+  filter(!is.na('veg_index'))
 
 ```
-
-
 
 
 ## Question 1) 
@@ -57,6 +62,27 @@ function "spread" and then make a plot that shows the correlation s a
 function of if the site was burned or not (x axis should be ndmi)
 You should exclude winter months and focus on summer months
 
+### Answer 1
+There is a positive correlation between NDVI and NDMI, which makes intuitive
+sense that higher moisture may correlate to increased vegetation 'greenness'.
+Isolating for summer months while separating into burn classes also highlights
+that both NDVI and NDMI are greater in the unburned areas when compared to the
+burned areas.
+
+```{r}
+q <- pivot_wider(full_long, names_from = "data", values_from = "value") %>%
+  filter_if(is.numeric, all_vars(!is.na(.))) %>%
+  mutate(month=month(DateTime),
+       year=year(DateTime))
+q_summer <- filter(q, month %in% c(6,7,8,9))
+
+ggplot(q_summer,aes(x=ndmi,y=ndvi,color=site)) + 
+  geom_point() + 
+  theme_few() + 
+  scale_color_few() + 
+  theme(legend.position=c(0.8,0.8))
+
+```
 
 
 ## Question 2 
@@ -65,30 +91,174 @@ You should exclude winter months and focus on summer months
  snow index) for January - April and average NDVI for June-August?
 In other words, does the previous year's snow cover influence vegetation
  growth for the following summer?
+ 
+### Answer 2
+There may be a very slight but weak positive correlation between previous
+winter's NDSI and current summer's NDVI. NDVI typically ranges >0.38 for both
+unburned sites and burned sites pre-fire. The clustering of NDVI values <0.3
+represents post-fire burned sites.
 
+```{r}
+q_annual_ndsi <- q %>%
+  mutate(year=year(DateTime)) %>%
+  mutate(month=month(DateTime)) %>%
+  filter(month %in% c(1,2,3,4)) %>%
+  group_by(site,year) %>%
+  summarize(mean_NDSI=mean(ndsi))
+
+q_annual_ndvi <- q %>%
+  mutate(year=year(DateTime)) %>%
+  mutate(month=month(DateTime)) %>%
+  filter(month %in% c(6,7,8)) %>%
+  group_by(site,year) %>%
+  summarize(mean_NDVI=mean(ndvi))
+
+q_snow2veg <- left_join(q_annual_ndsi, q_annual_ndvi)
+
+ggplot(q_snow2veg,aes(x=mean_NDSI,y=mean_NDVI,color=site)) + 
+  geom_point() + 
+  theme_few() + 
+  scale_color_few() + 
+  theme(legend.position=c(0.8,0.2))
+
+```
 
 ## Q3
 
 How is the snow effect from question 2 different between pre- and post-burn
-and burned and unburned? 
+and burned and unburned?
+
+### Answer 3
+We can see a pretty drastic shift in post-fire NDVI between burned and unburned
+areas. We see similar mean NDSI values, but unburned NDVI is greater in all of
+these cases when compared to the NDVI in burned locations. This trend is not
+noticeable in the pre-fire values where the yet-to-be-burned locations have
+greater NDVI values consistent with the unburned locations.
+
+```{r}
+q_snow2veg_burn <- q_snow2veg %>% filter(site=="burned")
+q_snow2veg_unburn <- q_snow2veg %>% filter(site=="unburned")
+
+#Breaking out burned/unburned entirely into different charts of pre- and post-fire
+p1 <- ggplot(q_snow2veg_unburn %>% filter(year<2002),aes(x=mean_NDSI,y=mean_NDVI,color=site)) + 
+  geom_point() + 
+  theme_few() + 
+  scale_color_few() + 
+  ggtitle("Pre-fire, Unburned")
+
+p2 <- ggplot(q_snow2veg_unburn %>% filter(year>2002),aes(x=mean_NDSI,y=mean_NDVI,color=site)) + 
+  geom_point() + 
+  theme_few() + 
+  scale_color_few() + 
+  ggtitle("Post-fire, Unburned")
+
+p3 <- ggplot(q_snow2veg_burn %>% filter(year<2002),aes(x=mean_NDSI,y=mean_NDVI,color=site)) + 
+  geom_point() + 
+  theme_few() + 
+  scale_color_few() + 
+  ggtitle("Pre-fire, Burned")
+
+p4 <- ggplot(q_snow2veg_burn %>% filter(year>2002),aes(x=mean_NDSI,y=mean_NDVI,color=site)) + 
+  geom_point() + 
+  theme_few() + 
+  scale_color_few() + 
+  ggtitle("Post-fire, Burned")
+grid.arrange(p1, p2, p3, p4)
+
+#Combining burned/unburned but still separated by pre- and post-fire. More clean, better comparison
+p1 <- ggplot(q_snow2veg %>% filter(year<2002),aes(x=mean_NDSI,y=mean_NDVI,color=site)) + 
+  geom_point() + 
+  theme_few() + 
+  scale_color_few() + 
+  ggtitle("Pre-fire (1984-2001)")
+
+p2 <- ggplot(q_snow2veg %>% filter(year>2002),aes(x=mean_NDSI,y=mean_NDVI,color=site)) + 
+  geom_point() + 
+  theme_few() + 
+  scale_color_few() + 
+  ggtitle("Post-fire (2003-2019)")
+grid.arrange(p1,p2)
+```
 
 
 ## Question 4
 
 What month is the greenest month on average? 
 
+### Answer 4
+
+The greenest month on average for all sites and years is August with an average
+NDVI of 0.387, while September has an average NDVI of 0.383. When we analyze
+just unburned locations across the time period, September is the greenest month
+with an average NDVI of 0.459, though June-October have average NDVI > 0.4. 
+
+```{r}
+#All sites across time
+q_monthly_ndvi <- q %>%
+  mutate(month=month(DateTime)) %>%
+  group_by(month) %>%
+  summarize(mean_NDVI=mean(ndvi))
+
+#Broken out by site
+q_monthly_ndvi2 <- q %>%
+  mutate(month=month(DateTime)) %>%
+  group_by(month, site) %>%
+  summarize(mean_NDVI=mean(ndvi))
+
+#Combining burned/unburned but still separated by pre- and post-fire. More clean, better comparison
+ggplot(q_monthly_ndvi2,aes(x=month,y=mean_NDVI,color=site)) + 
+  geom_point() + 
+  theme_few() + 
+  scale_color_few() + 
+  scale_x_continuous(breaks=seq(0,12,by=1)) +
+  ggtitle("NDVI by Month")
+
+```
 
 
 
-## Question 5) 
+## Question 5
 
 What month is the snowiest on average?
 
+### Answer 5
 
-## Bonus Question: Redo all problems with `spread` and `gather` using modern tidyverse syntax. 
+The snowiest month on average for all sites and years is January with an average
+NDSI of 0.210, while February has an average NDSI of 0.198. When we analyze
+just unburned locations across the time period, February is the snowiest month
+with an average NDSI of 0.273, and December-February is consistently snowier in
+unburned sites than burned sites.
+
+```{r}
+#All sites across time
+q_monthly_ndsi <- q %>%
+  mutate(month=month(DateTime)) %>%
+  group_by(month) %>%
+  summarize(mean_NDSI=mean(ndsi))
+
+#Broken out by site
+q_monthly_ndsi2 <- q %>%
+  mutate(month=month(DateTime)) %>%
+  group_by(month, site) %>%
+  summarize(mean_NDSI=mean(ndsi))
+
+#Combining burned/unburned but still separated by pre- and post-fire. More clean, better comparison
+ggplot(q_monthly_ndsi2,aes(x=month,y=mean_NDSI,color=site)) + 
+  geom_point() + 
+  theme_few() + 
+  scale_color_few() + 
+  scale_x_continuous(breaks=seq(0,12,by=1)) +
+  ggtitle("NDSI by Month")
+```
+
+## Bonus Question
+
+Redo all problems with `spread` and `gather` using modern tidyverse syntax. 
 
 
-## Bonus Question: Use Climage Engine to pull the same data for the assignment, but updated with 2020/2021 data.
+## Bonus Question
+
+Use Climate Engine to pull the same data for the assignment, but updated with 2020/2021 data.
 
 
 
