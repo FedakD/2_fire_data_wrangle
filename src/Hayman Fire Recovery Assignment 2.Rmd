@@ -119,6 +119,8 @@ ggplot(q_snow2veg,aes(x=mean_NDSI,y=mean_NDVI,color=site)) +
   geom_point() + 
   theme_few() + 
   scale_color_few() + 
+  xlab("Mean NDSI") + ylab("Mean NDVI") +
+  ggtitle("Effects of snowpack on summer growth") +
   theme(legend.position=c(0.8,0.2))
 
 ```
@@ -176,6 +178,7 @@ p2 <- ggplot(q_snow2veg %>% filter(year>2002),aes(x=mean_NDSI,y=mean_NDVI,color=
   geom_point() + 
   theme_few() + 
   scale_color_few() + 
+  xlab("Mean NDSI") + ylab("Mean NDVI") +
   ggtitle("Post-fire (2003-2019)")
 grid.arrange(p1,p2)
 ```
@@ -211,6 +214,7 @@ ggplot(q_monthly_ndvi2,aes(x=month,y=mean_NDVI,color=site)) +
   theme_few() + 
   scale_color_few() + 
   scale_x_continuous(breaks=seq(0,12,by=1)) +
+  xlab("Month") + ylab("Mean NDVI") +
   ggtitle("NDVI by Month")
 
 ```
@@ -248,6 +252,8 @@ ggplot(q_monthly_ndsi2,aes(x=month,y=mean_NDSI,color=site)) +
   theme_few() + 
   scale_color_few() + 
   scale_x_continuous(breaks=seq(0,12,by=1)) +
+  xlab("Month") +
+  ylab("Mean NDSI") +
   ggtitle("NDSI by Month")
 ```
 
