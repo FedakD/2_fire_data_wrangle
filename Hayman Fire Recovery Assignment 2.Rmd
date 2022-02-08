@@ -45,17 +45,11 @@ ndvi <- read_csv(files[3])%>%
 full_long <- rbind(ndvi,ndmi,ndsi) %>%
   gather(key='site',value='value',-DateTime,-data) %>%
   filter(!is.na(value))
-#With pivot_longer
-full_long_a <- rbind(ndvi, ndmi, ndsi) %>%
-  pivot_longer(-c(DateTime, data), names_to = 'site', values_to = 'value', values_drop_na = TRUE)
 
 # Example stack as a tidy dataset
 full_long2 <- rbind(ndvi, ndmi, ndsi) %>%
   gather(key='treatment', value='veg_index', -DateTime, -data) %>%
   filter(!is.na('veg_index'))
-#With pivot_longer
-full_long2_a <- rbind(ndvi, ndmi, ndsi) %>%
-  pivot_longer(-c(DateTime, data), names_to = 'treatment', values_to = 'veg_index', values_drop_na = TRUE)
 
 ```
 
@@ -265,18 +259,13 @@ ggplot(q_monthly_ndsi2,aes(x=month,y=mean_NDSI,color=site)) +
 
 ## Bonus Question
 
-Redo all problems with `spread` and `gather` using modern tidyverse syntax.
+Redo all problems with `spread` and `gather` using modern tidyverse syntax. 
 
-### Bonus Answer
-`spread` -> `pivot_wider`; `gather` -> `pivot_longer`
-Completed using `pivot_wider` and `pivot_longer` within my code. I also updated full_long and full_long2 using `pivot_longer` but named it full_long_a and full_long2_a.
 
 ## Bonus Question
 
 Use Climate Engine to pull the same data for the assignment, but updated with 2020/2021 data.
 
-### Bonus Answer
 
-Ran out of time and used function `had_to_call_it_quits`.
 
 

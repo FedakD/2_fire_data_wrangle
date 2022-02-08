@@ -166,7 +166,7 @@ pre code {
 
 <h1 class="title toc-ignore">Hayman Fire Recovery</h1>
 <h4 class="author">Derek Fedak</h4>
-<h4 class="date">Wednesday 02 February, 2022</h4>
+<h4 class="date">Monday 07 February, 2022</h4>
 
 </div>
 
@@ -204,11 +204,17 @@ ndvi &lt;- read_csv(files[3])%&gt;%
 full_long &lt;- rbind(ndvi,ndmi,ndsi) %&gt;%
   gather(key=&#39;site&#39;,value=&#39;value&#39;,-DateTime,-data) %&gt;%
   filter(!is.na(value))
+#With pivot_longer
+full_long_a &lt;- rbind(ndvi, ndmi, ndsi) %&gt;%
+  pivot_longer(-c(DateTime, data), names_to = &#39;site&#39;, values_to = &#39;value&#39;, values_drop_na = TRUE)
 
 # Example stack as a tidy dataset
 full_long2 &lt;- rbind(ndvi, ndmi, ndsi) %&gt;%
   gather(key=&#39;treatment&#39;, value=&#39;veg_index&#39;, -DateTime, -data) %&gt;%
-  filter(!is.na(&#39;veg_index&#39;))</code></pre>
+  filter(!is.na(&#39;veg_index&#39;))
+#With pivot_longer
+full_long2_a &lt;- rbind(ndvi, ndmi, ndsi) %&gt;%
+  pivot_longer(-c(DateTime, data), names_to = &#39;treatment&#39;, values_to = &#39;veg_index&#39;, values_drop_na = TRUE)</code></pre>
 <div id="question-1" class="section level2">
 <h2>Question 1)</h2>
 <p>What is the correlation between NDVI and NDMI? - here I want you to convert the full_long dataset in to a wide dataset using the function “spread” and then make a plot that shows the correlation s a function of if the site was burned or not (x axis should be ndmi) You should exclude winter months and focus on summer months</p>
@@ -377,10 +383,18 @@ ggplot(q_monthly_ndsi2,aes(x=month,y=mean_NDSI,color=site)) +
 <div id="bonus-question" class="section level2">
 <h2>Bonus Question</h2>
 <p>Redo all problems with <code>spread</code> and <code>gather</code> using modern tidyverse syntax.</p>
+<div id="bonus-answer" class="section level3">
+<h3>Bonus Answer</h3>
+<p><code>spread</code> -&gt; <code>pivot_wider</code>; <code>gather</code> -&gt; <code>pivot_longer</code> Completed using <code>pivot_wider</code> and <code>pivot_longer</code> within my code. I also updated full_long and full_long2 using <code>pivot_longer</code> but named it full_long_a and full_long2_a.</p>
+</div>
 </div>
 <div id="bonus-question-1" class="section level2">
 <h2>Bonus Question</h2>
 <p>Use Climate Engine to pull the same data for the assignment, but updated with 2020/2021 data.</p>
+<div id="bonus-answer-1" class="section level3">
+<h3>Bonus Answer</h3>
+<p>Ran out of time and used function <code>had_to_call_it_quits</code>.</p>
+</div>
 </div>
 
 
